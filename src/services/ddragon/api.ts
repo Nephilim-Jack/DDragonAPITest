@@ -1,6 +1,8 @@
 import axios from 'axios'
+import { get } from 'lodash'
+import { ChampionDataResponse, ChampionData } from './interfaces'
 
-const ddragonBseUrl = 'http://ddragon.leagueoflegends.com/cdn'
+const DDRAGONBASEURL = 'http://ddragon.leagueoflegends.com/cdn'
 
 const getLastApiVersion = async () => {
     const versionsUrl = 'https://ddragon.leagueoflegends.com/api/versions.json'
@@ -10,36 +12,45 @@ const getLastApiVersion = async () => {
     return lastVersion
 }
 
+const lattestVersion = getLastApiVersion()
+
 const DefaultAPI = () => {
     return axios.create({
-        baseURL: ddragonBseUrl
+        baseURL: DDRAGONBASEURL
     })
 }
 
 export const getAllChampionsNames = async () => {
-    const version = await getLastApiVersion()
+    const version = await lattestVersion
     const championsListPath = `/${version}/data/pt_BR/champion.json`
 
     const api = DefaultAPI()
-    api.get(championsListPath).then(response => {
+    const responseData = await api.get(championsListPath).then(response => {
         return response.data
     }).catch(error => {
-        console.log(error)
+        return error
     })
+    return responseData
 }
 
 export const getDetailOf = async (champion: string) => {
-    const version = await getLastApiVersion()
+    const version = await lattestVersion
     const championDetailPath = `/${version}/data/pt_BR/champion/${champion}.json`
 
     const api = DefaultAPI()
-    api.get(championDetailPath).then(response => {
-        return response.data
+    const responseData: ChampionDataResponse = await api.get<ChampionDataResponse>(championDetailPath).then(response => {
+        return {
+            data: get(response.data.data, champion) as ChampionData,
+            format: response.data.format,
+            type: response.data.type,
+            version: response.data.version,
+        }
     }).catch(error => {
-        console.log(error)
+        return error
     })
+    return responseData
 }
 
 export const getSplashArtUrlOf = (champion: string) => {
-    return `${ddragonBseUrl}/img/champion/splash/${champion}_0.jpg`
+    return `${DDRAGONBASEURL}/img/champion/splash/${champion}_0.jpg`
 }
