@@ -1,13 +1,19 @@
 import React, { useEffect, useState } from 'react'
-import { WelcomeMessage } from './styles'
+import {
+    ChampionImage,
+    PageContainer, SearchContainer,
+    SearchInput, ChampionImageContainer,
+} from './styles'
 import { getSplashArtUrlOf, getDetailOf } from '../../services/ddragon/api'
 import { ChampionData } from '../../services/ddragon/interfaces'
-
+import { FaSearch } from 'react-icons/fa'
+import Lore from '../../components/ChampDescription/index'
 
 const HomePage = () => {
     const [championName, setChampionName] = useState('')
-    const [championData, setChampionData] = useState<ChampionData | any>({})
-    const [championImage, setChampionImage] = useState<string>('')
+    const [championData, setChampionData] = useState<ChampionData>()
+    const [championImage, setChampionImage] = useState<string>()
+    const [activeState, setActiveState] = useState(false)
 
     const loadChampionData = async () => {
         const champData = (await getDetailOf(championName)).data
@@ -23,17 +29,30 @@ const HomePage = () => {
     }
 
     useEffect(() => {
-        setChampionImage(getSplashArtUrlOf(championName))
+        setActiveState(false)
+        const changeChampionImage = () => {
+            setChampionImage(getSplashArtUrlOf(championName))
+        }
+        changeChampionImage()
         loadChampionData()
+        setTimeout(() => { setActiveState(true) }, 500)
     }, [championName])
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <WelcomeMessage>Data Dragon Api Test</WelcomeMessage>
-            <input type="text" onKeyPress={event => { handleInputChange(event) }} />
-            {championImage ? <img src={championImage} alt={`Imagem do(a) ${championName}`} width="100%" /> : null}
-            {championData ? <p>{championData.lore}</p> : null}
-        </div>
+        <PageContainer>
+            <SearchContainer>
+                <SearchInput type="text" onKeyPress={event => { handleInputChange(event) }} />
+                <FaSearch />
+            </SearchContainer>
+            {championData ?
+                <>
+                    <ChampionImage hidden={!activeState} src={championImage} alt={`Imagem do(a) ${championName}`} width="100%" />
+                    <ChampionImageContainer />
+
+                    <Lore lore={championData.lore} hidden={!activeState} />
+                </>
+                : null}
+        </PageContainer>
     )
 }
 // on main
